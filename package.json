@@ -4,12 +4,13 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
   "engines": {
-    "node": "10.10.0" 
+    "node": "10.10.0"
   },
   "keywords": [
     "example",
