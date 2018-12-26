@@ -15,13 +15,13 @@ module.exports = {
     }, {
       $pull: {
         chatList: {
-          receiverId: req.params.receiver_id
+          receiverId: req.params.receiver_Id
         } 
       }
     });
 
     await User.update({
-      _id: req.params.receiver_id
+      _id: req.params.receiver_Id
     }, {
       $pull: {
         chatList: {

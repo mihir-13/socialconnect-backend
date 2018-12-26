@@ -1,48 +1,112 @@
 const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
+const cloudinary = require('cloudinary');
+const moment = require('moment');
+const request = require('request');
 
 const Post = require('../Models/postModel');
 const User = require('../Models/userModels');
+
+cloudinary.config({
+  cloud_name: 'mihirb',
+  api_key: '643616234724184',
+  api_secret: 'eInM1w_BbL9leqKDw689Vka4gh0'
+});
 
 module.exports = {
   AddPost(req, res) {
     const schema = Joi.object().keys({
       post: Joi.string().required()
     });
-    const { error } = Joi.validate(req.body, schema);
+    const body = {
+      post: req.body.post
+    }
+    const { error } = Joi.validate(body, schema);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
-    const body = {
+    const body2 = {
       user: req.user._id,
       username: req.user.username,
       post: req.body.post,
       created: new Date()
     }
 
-    Post.create(body).then(async (post) => {
-      await User.update({
-        _id: req.user._id
-      }, {
-          $push: {
-            posts: {
-              postId: post._id,
-              post: req.body.post || post.post,
-              created: new Date()
+    if (req.body.post && !req.body.image) {
+      Post.create(body2).then(async (post) => {
+        await User.update({
+          _id: req.user._id
+        }, {
+            $push: {
+              posts: {
+                postId: post._id,
+                post: req.body.post || post.post,
+                created: new Date()
+              }
             }
-          }
-        })
-      res.status(HttpStatus.OK).json({ message: 'Post Created', post });
-    }).catch(error => {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error Occured.' });
-    });
+          });
+        res.status(HttpStatus.OK).json({ message: 'Post Created', post });
+      }).catch(error => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error Occured.' });
+      });
+    }
+
+    if (req.body.post && req.body.image) {
+      cloudinary.uploader.upload(req.body.image, async (result) => {
+        const reqBody = { 
+          user: req.user._id,
+          username: req.user.username,
+          post: req.body.post,
+          imgId: result.public_id,
+          imgVersion: result.version,
+          created: new Date()
+        }
+        Post.create(reqBody).then(async (post) => {
+          await User.update({
+            _id: req.user._id
+          }, {
+              $push: {
+                posts: {
+                  postId: post._id,
+                  post: req.body.post || post.post,
+                  created: new Date()
+                }
+              }
+            });
+          res.status(HttpStatus.OK).json({ message: 'Post Created', post });
+        }).catch(error => {
+          res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error Occured.' });
+        });
+      });
+    }
   },
 
   async GetAllPosts(req, res) {
     try {
+      const today = moment().startOf('day');
+      const tomorrow = moment(today).add(45, 'days');
+      // created: {$gte: today.toDate(), $lt: tomorrow.toDate()}
       const posts = await Post.find({}).populate('user').sort({ created: -1 });
 
       const top = await Post.find({ totalLikes: { $gte: 2 } }).populate('user').sort({ created: -1 });
+
+      const user = await User.findOne({ _id: req.user._id});
+      
+      if (user.city === '' && user.country === '') {
+        request('https://geoip-db.com/json/', { json: true }, async (err, res, body) => {
+          await User.update({
+            _id: req.user._id
+          }, {
+            city: body.city,
+            country: body.country_name
+          })
+          console.log('city', city);
+        });
+        
+      }
+      
+
+      
 
       return res.status(HttpStatus.OK).json({ message: 'All Posts', posts, top });
     } catch (err) {

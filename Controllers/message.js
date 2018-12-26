@@ -25,6 +25,64 @@ module.exports = {
     }
   },
 
+  async MarkReceiverMessages(req, res) {
+    console.log(req.params);
+    const { sender, receiver } = req.params;
+    const msg = await Message.aggregate([
+      {$unwind: '$message'},
+      {
+        $match: {
+          $and: [{'message.sendername': receiver, 'message.receivername': sender}]
+        }
+      }
+    ]);
+    if(msg.length > 0) {
+      try {
+        msg.forEach(async (value) => {
+          await Message.update({
+            'message._id': value.message._id
+          },
+          {
+            $set: {'message.$.isRead': true }
+          });
+        });
+        res.status(httpStatus.OK).json({ message: 'Messages Marked as Read'});
+      } catch (err) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while Messages Read as Marked!' });
+      }
+    }
+  },
+
+  async MarkAllMessages(req, res) {
+    console.log(req.params);
+    const msg = await Message.aggregate([
+     { $match: {
+       'message.receivername': req.user.username
+      }
+    },
+    { $unwind: '$message'},
+    { $match: {
+      'message.receivername': req.user.username
+     }
+   }
+    ]);
+    if(msg.length > 0) {
+      try {
+        msg.forEach(async (value) => {
+          await Message.update({
+            'message._id': value.message._id
+          },
+          {
+            $set: {'message.$.isRead': true }
+          });
+        });
+        res.status(httpStatus.OK).json({ message: 'All Messages Marked as Read'});
+      } catch (err) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while All Messages Read as Marked!' });
+      }
+    }
+  },
+
 
   SendMessage(req, res) {
     const { sender_Id, receiver_Id } = req.params;
@@ -36,8 +94,8 @@ module.exports = {
       ]
     }, async (err, result) => { 
       if (result.length > 0) {
-        // const msg = await Message.findOne({ conversationId: result[0]._id });
-        // Helper.updateChatList(req, msg);
+        const msg = await Message.findOne({ conversationId: result[0]._id }).sort({ created: -1 });
+        Helper.updateChatList(req, msg);
         
         await Message.update({
           conversationId: result[0]._id

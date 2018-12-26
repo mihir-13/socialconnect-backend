@@ -3,8 +3,11 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
+const _ = require('lodash');
 
 const app = express();
+
+const { User } = require('./Helpers/UserClass');
 
 // Create socket.io for server and listens to it. 
 const server = require('http').createServer(app);
@@ -16,8 +19,9 @@ const posts = require('./Routes/postRoutes');
 const users = require('./Routes/userRoute');
 const friends = require('./Routes/friendsRoutes');
 const message = require('./Routes/messageRoutes');
+const image = require('./Routes/imageRoutes');
 
-require('./socket/streams')(io);
+require('./socket/streams')(io, User, _);
 require('./socket/private')(io);
 
 // Middlewares 
@@ -31,22 +35,17 @@ app.use('/api/socialconnect', posts);
 app.use('/api/socialconnect', users);
 app.use('/api/socialconnect', friends);
 app.use('/api/socialconnect', message);
-
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    next();
-});
+app.use('/api/socialconnect', image);
 
 mongoose.Promise = global.Promise;
 mongoose.connect(dbConfig.url, { useNewUrlParser: true });
 
-// const auth = require('./Routes/authRoutes');
-// app.use('/api/socialconnect', auth);
 
+let port = process.env.PORT;
+if ( port == null || port == '') {
+    port = 3000;
+}
 
-server.listen(3000, () => {
-    console.log('Server started on port 3000!');
+server.listen(port, () => {
+    console.log(`Server started on port ${port}!`);
 });
