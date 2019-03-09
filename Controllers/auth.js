@@ -9,6 +9,7 @@ const dbConfig = require('../Config/secret');
 
 module.exports = {
   async CreateUser(req, res) {
+    console.log(req.body);
     // Validating the input params
     const schema = Joi.object().keys({
       username: Joi.string().min(5).max(12).required(),
