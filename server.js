@@ -27,8 +27,8 @@ require('./socket/private')(io);
 // Middlewares 
 app.use(cors());
 app.use(logger('dev'));
-app.use(express.json({limit: '50mb'}));
-app.use(express.urlencoded({extended: true, limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use('/api/socialconnect', auth);
 app.use('/api/socialconnect', posts);
@@ -38,11 +38,14 @@ app.use('/api/socialconnect', message);
 app.use('/api/socialconnect', image);
 
 mongoose.Promise = global.Promise;
-mongoose.connect(dbConfig.url, { useNewUrlParser: true });
+mongoose.connect(dbConfig.url, { useNewUrlParser: true },
+    (err) =>
+        err ? console.log(err) : console.log(
+            "Connected to socialconnect database", dbConfig.url));
 
 
 let port = process.env.PORT;
-if ( port == null || port == '') {
+if (port == null || port == '') {
     port = 3000;
 }
 
@@ -51,5 +54,5 @@ if ( port == null || port == '') {
 // });
 
 server.listen(port, () => {
-    console.log(`Server started on port ${port}!`);
+    console.log(`Server started on port ${port} ${server}!`);
 });

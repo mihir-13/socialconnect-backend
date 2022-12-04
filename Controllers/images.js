@@ -11,17 +11,18 @@ cloudinary.config({
 
 module.exports = {
   UploadImage(req, res) {
+    console.log('Req.body image', req.body);
     cloudinary.uploader.upload(req.body.image, async (result) => {
-      await User.update({
+      await User.updateOne({
         _id: req.user._id
       }, {
-          $push: {
-            images: {
-              imgId: result.public_id,
-              imgVersion: result.version
-            }
+        $push: {
+          images: {
+            imgId: result.public_id,
+            imgVersion: result.version
           }
-        })
+        }
+      })
     })
       .then(() => {
         res.status(HttpStatus.OK).json({ message: 'Image Uploaded' });
@@ -35,12 +36,12 @@ module.exports = {
     await User.update({
       _id: req.user._id
     }, {
-        picId: imgId,
-        picVersion: imgVersion
-      }).then(() => {
-        res.status(HttpStatus.OK).json({ message: 'Default Image Set' });
-      }).catch(() => {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while changing Image.' });
-      });
+      picId: imgId,
+      picVersion: imgVersion
+    }).then(() => {
+      res.status(HttpStatus.OK).json({ message: 'Default Image Set' });
+    }).catch(() => {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while changing Image.' });
+    });
   }
 }

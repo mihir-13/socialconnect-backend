@@ -50,19 +50,22 @@ module.exports = {
 
       // Creating a User and storing it into db
       User.create(body).then((user) => {
-        const token = jwt.sign({data: user}, dbConfig.secret, {
-           expiresIn: '1h'
+        console.log('USER CRETED IN CRETE', user);
+        const token = jwt.sign({ data: user }, dbConfig.secret, {
+          expiresIn: '1h'
         });
         res.cookie('auth', token);
+        console.log("HttpStatus", HttpStatus);
         res.status(HttpStatus.CREATED).json({ message: 'User created successfully!', user, token });
       }).catch(err => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Something went wrong!' });
       });
     });
-  }, 
+  },
 
   async LoginUser(req, res) {
-    if(!req.body.username || !req.body.password) {
+    console.log('REQ BODY', req.body);
+    if (!req.body.username || !req.body.password) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'No empty fields allowed!' });
     }
 
@@ -71,7 +74,7 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'Username nor found!' });
       }
       return bcrypt.compare(req.body.password, user.password).then((result) => {
-        if(!result) {
+        if (!result) {
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Password is incorrect!' });
         }
         const token = jwt.sign({ data: user }, dbConfig.secret, {
@@ -81,6 +84,7 @@ module.exports = {
         res.status(HttpStatus.OK).json({ message: 'Login successful', user, token });
       });
     }).catch(err => {
+      console.log('err', err);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Something went wrong while LogIn!' });
     });
   }

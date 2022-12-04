@@ -7,57 +7,58 @@ const bcrypt = require('bcryptjs');
 module.exports = {
   async GetAllUsers(req, res) {
     await User.find({})
-    .populate('posts.postId')
-    .populate('following.userFollowed')
-    .populate('followers.follower')
-    .populate('chatList.receiverId')
-    .populate('chatList.msgId')
-    .populate('notifications.senderId')
-    .then((result) => {
-      res.status(HttpStatus.OK).json({ message: 'All Users', result });
-    }).catch(err => {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while fetching all users.' });
-    });
+      .populate('posts.postId')
+      .populate('following.userFollowed')
+      .populate('followers.follower')
+      .populate('chatList.receiverId')
+      .populate('chatList.msgId')
+      .populate('notifications.senderId')
+      .then((result) => {
+        res.status(HttpStatus.OK).json({ message: 'All Users', result });
+      }).catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while fetching all users.' });
+      });
   },
 
 
   async GetUsersById(req, res) {
     await User.findOne({ _id: req.params.id })
-    .populate('posts.postId')
-    .populate('following.userFollowed') 
-    .populate('followers.follower')
-    .populate('chatList.receiverId')
-    .populate('chatList.msgId')
-    .populate('notifications.senderId')
-    .then((result) => { 
-      res.status(HttpStatus.OK).json({ message: 'User By Id', result });
-    }).catch(err => {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while fetching user By id.' });
-    });
+      .populate('posts.postId')
+      .populate('following.userFollowed')
+      .populate('followers.follower')
+      .populate('chatList.receiverId')
+      .populate('chatList.msgId')
+      .populate('notifications.senderId')
+      .then((result) => {
+        res.status(HttpStatus.OK).json({ message: 'User By Id', result });
+      }).catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while fetching user By id.' });
+      });
   },
 
 
   async GetUsersByUsername(req, res) {
     await User.findOne({ username: req.params.username })
-    .populate('posts.postId')
-    .populate('following.userFollowed') 
-    .populate('followers.follower')
-    .populate('chatList.receiverId')
-    .populate('chatList.msgId')
-    .populate('notifications.senderId')
-    .then((result) => {
-      res.status(HttpStatus.OK).json({ message: 'User By Username', result });
-    }).catch(err => {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while fetching user By username.' });
-    });
+      .populate('posts.postId')
+      .populate('following.userFollowed')
+      .populate('followers.follower')
+      .populate('chatList.receiverId')
+      .populate('chatList.msgId')
+      .populate('notifications.senderId')
+      .then((result) => {
+        res.status(HttpStatus.OK).json({ message: 'User By Username', result });
+      }).catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while fetching user By username.' });
+      });
   },
 
   async ProfileNotification(req, res) {
+    console.log('req.body notification', req.body);
     const dateValue = moment().format('YYYY-MM-DD');
-    await User.update({
+    await User.updateOne({
       _id: req.body.id,
-      'notifications.date': {$ne: [dateValue, '']},
-      'notifications.senderId': {$ne: req.user._id}
+      // 'notifications.date': { $ne: [dateValue, ''] },
+      // 'notifications.senderId': { $ne: req.user._id }
     }, {
       $push: {
         notifications: {
@@ -69,7 +70,7 @@ module.exports = {
         }
       }
     }).then((result) => {
-      res.status(HttpStatus.OK).json({ message: 'Notification Sent'});
+      res.status(HttpStatus.OK).json({ message: 'Notification Sent' });
     }).catch(err => {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while sending notification' });
     });
@@ -81,7 +82,7 @@ module.exports = {
       newPassword: Joi.string().min(5).required(),
       confirmPassword: Joi.string().min(5).optional()
     });
-    const { error, value } = Joi.validate(req.body, schema); 
+    const { error, value } = Joi.validate(req.body, schema);
 
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: error.details });
@@ -97,9 +98,9 @@ module.exports = {
       await User.update({
         _id: req.user._id
       }, {
-        password: newpassword 
+        password: newpassword
       }).then(() => {
-        res.status(HttpStatus.OK).json({ message: 'Password changed successfully'});
+        res.status(HttpStatus.OK).json({ message: 'Password changed successfully' });
       }).catch(err => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error while changing password' });
       });
